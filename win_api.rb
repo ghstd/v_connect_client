@@ -11,6 +11,7 @@ module WinAPI
   attach_function :GetWindowRect, [:pointer, :pointer], :bool
   attach_function :InvalidateRect, [:pointer, :pointer, :bool], :bool
   attach_function :FindWindowW, [:string, :string], :uintptr_t
+  attach_function :GetAsyncKeyState, [:int], :short
 
   # Определяем константы
   SWP_NOSIZE = 0x0001
@@ -48,5 +49,10 @@ module WinAPI
 
     # Обновляем окно
     WinAPI.InvalidateRect(hwnd_pointer, nil, true)
+  end
+
+  def self.check_key(key_code)
+    state = WinAPI.GetAsyncKeyState(key_code)
+    (state & 0x8000) != 0
   end
 end

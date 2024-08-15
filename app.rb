@@ -117,6 +117,18 @@ class MyApp < FXMainWindow
   end
 
   def check_messages
+    if WinAPI.check_key(97)
+      @client.send_signal_message("1")
+    end
+    if WinAPI.check_key(98)
+      @client.send_signal_message("2")
+    end
+    if WinAPI.check_key(99)
+      @client.send_signal_message("3")
+    end
+    if WinAPI.check_key(96)
+      @client.send_signal_message("4")
+    end
     @check_messages_timer = FXApp.instance.addTimeout(100) do
       get_messages
       @check_messages_timer = FXApp.instance.addTimeout(100) { check_messages }

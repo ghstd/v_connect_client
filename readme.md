@@ -10,6 +10,6 @@
 
 ```
 @echo off
-ruby path\to\your\main_file.rb
+ruby path\to\your\app.rb
 pause
 ```
