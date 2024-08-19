@@ -5,7 +5,7 @@ class SignalItem < FXCanvas
     @base_color = base_color
     @signal_color = signal_color
     @current_color = @base_color
-    @change_color_timeout = 1500
+    @change_color_timeout = 150
 
     self.connect(SEL_PAINT) do
       draw(x, y, width, height)

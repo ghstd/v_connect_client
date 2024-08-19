@@ -1,4 +1,8 @@
 require 'fox16'
+
+require 'net/http'
+require 'uri'
+
 include Fox
 require_relative 'client.rb'
 require_relative 'canvas_item.rb'
@@ -7,15 +11,27 @@ require_relative 'win_api.rb'
 
 # URL = "ws://localhost:3000/cable"
 URL = "wss://v-connect-q36m.onrender.com/cable"
+HTTP_URL = "https://v-connect-q36m.onrender.com"
 
 
 class MyApp < FXMainWindow
   def initialize(app)
-    super(app, "Valheim Connect", width: 120, height: 350)
+    super(app, "Valheim Connect", width: 120, height: 370)
 
 
     @client = WebSocketClient.new(URL)
     @signal_buttons = []
+    @signal_buttons_content = {
+      '1' => 'OK',
+      '2' => 'HELP',
+      '3' => 'GO-GO',
+      '4' => 'FuckYou'
+    }
+    @last_signal_timestamp = 0
+
+    # TIMEOUTS
+    @ping_server_timeout = 60000
+    @check_cycle_timeout = 100
 
 
     # FONT
@@ -35,24 +51,19 @@ class MyApp < FXMainWindow
 
 
     # BUTTON_CONNECT
-    button_connect = FXButton.new(self, "Connect", nil, nil, 0,
+    @button_connect = FXButton.new(self, "Connect", nil, nil, 0,
     BUTTON_NORMAL | LAYOUT_FIX_WIDTH | LAYOUT_FIX_HEIGHT | LAYOUT_FIX_X | LAYOUT_FIX_Y,
     10, 10, 100, 30)
 
-    button_connect.backColor = @color_green_1
-    button_connect.textColor = @color_text
-    button_connect.font = @font
+    @button_connect.backColor = @color_green_1
+    @button_connect.textColor = @color_text
+    @button_connect.font = @font
 
-    button_connect.connect(SEL_COMMAND) do
+    @button_connect.connect(SEL_COMMAND) do
+      return if @client.is_connected?
       @client.connect
-      check_messages
-      FXApp.instance.addTimeout(5000) do
-        if @client.is_connected?
-          button_connect.backColor = @color_green_3
-        else
-          button_connect.backColor = @color_orange
-        end
-      end
+      check_cycle
+      ping_server
     end
 
 
@@ -64,19 +75,19 @@ class MyApp < FXMainWindow
 
 
     # SIGNAL_BUTTONS
-    @signal_buttons << FXButton.new(self, "ПРИНЯЛ", nil, nil, 0,
+    @signal_buttons << FXButton.new(self, @signal_buttons_content['1'], nil, nil, 0,
     BUTTON_NORMAL | LAYOUT_FIX_WIDTH | LAYOUT_FIX_HEIGHT | LAYOUT_FIX_X | LAYOUT_FIX_Y,
     10, 50, 70, 30)
 
-    @signal_buttons << FXButton.new(self, "ПОДОЙДИ", nil, nil, 0,
+    @signal_buttons << FXButton.new(self, @signal_buttons_content['2'], nil, nil, 0,
     BUTTON_NORMAL | LAYOUT_FIX_WIDTH | LAYOUT_FIX_HEIGHT | LAYOUT_FIX_X | LAYOUT_FIX_Y,
     10, 90, 70, 30)
 
-    @signal_buttons << FXButton.new(self, "ЧИТАЙ", nil, nil, 0,
+    @signal_buttons << FXButton.new(self, @signal_buttons_content['3'], nil, nil, 0,
     BUTTON_NORMAL | LAYOUT_FIX_WIDTH | LAYOUT_FIX_HEIGHT | LAYOUT_FIX_X | LAYOUT_FIX_Y,
     10, 130, 70, 30)
 
-    @signal_buttons << FXButton.new(self, "FuckYou", nil, nil, 0,
+    @signal_buttons << FXButton.new(self, @signal_buttons_content['4'], nil, nil, 0,
     BUTTON_NORMAL | LAYOUT_FIX_WIDTH | LAYOUT_FIX_HEIGHT | LAYOUT_FIX_X | LAYOUT_FIX_Y,
     10, 170, 70, 30)
 
@@ -110,34 +121,69 @@ class MyApp < FXMainWindow
       @input_field.setText('')
     end
 
-    @text_display = FXText.new(self, nil, 0, TEXT_WORDWRAP | TEXT_READONLY | LAYOUT_FIX_WIDTH | LAYOUT_FIX_HEIGHT | LAYOUT_FIX_X | LAYOUT_FIX_Y, 10, 290, 100, 50)
+    @text_display = FXText.new(self, nil, 0, TEXT_WORDWRAP | TEXT_READONLY | LAYOUT_FIX_WIDTH | LAYOUT_FIX_HEIGHT | LAYOUT_FIX_X | LAYOUT_FIX_Y, 10, 290, 100, 70)
     @text_display.font = @font
     @text_display.backColor = @color_dark
     @text_display.textColor = @color_text
   end
 
-  def check_messages
+  def signal_button_color_change(button)
+    button.backColor = @color_green_2
+    FXApp.instance.addTimeout(150) do
+      button.backColor = @color_green_1
+    end
+  end
+
+  def check_cycle
     if WinAPI.check_key(97)
-      @client.send_signal_message("1")
+      if (Time.now.to_f * 1000).to_i - @last_signal_timestamp > 250
+        @client.send_signal_message("1")
+        signal_button_color_change(@signal_buttons[0])
+        @last_signal_timestamp = (Time.now.to_f * 1000).to_i
+      end
     end
     if WinAPI.check_key(98)
-      @client.send_signal_message("2")
+      if (Time.now.to_f * 1000).to_i - @last_signal_timestamp > 250
+        @client.send_signal_message("2")
+        signal_button_color_change(@signal_buttons[1])
+        @last_signal_timestamp = (Time.now.to_f * 1000).to_i
+      end
     end
     if WinAPI.check_key(99)
-      @client.send_signal_message("3")
+      if (Time.now.to_f * 1000).to_i - @last_signal_timestamp > 250
+        @client.send_signal_message("3")
+        signal_button_color_change(@signal_buttons[2])
+        @last_signal_timestamp = (Time.now.to_f * 1000).to_i
+      end
     end
     if WinAPI.check_key(96)
-      @client.send_signal_message("4")
+      if (Time.now.to_f * 1000).to_i - @last_signal_timestamp > 250
+        @client.send_signal_message("4")
+        signal_button_color_change(@signal_buttons[3])
+        @last_signal_timestamp = (Time.now.to_f * 1000).to_i
+      end
     end
-    @check_messages_timer = FXApp.instance.addTimeout(100) do
-      get_messages
-      @check_messages_timer = FXApp.instance.addTimeout(100) { check_messages }
+
+    # CHANGE CLOLOR OF @button_connect
+    if @client.is_connected?
+      if @button_connect.backColor != @color_green_3
+        @button_connect.backColor = @color_green_3
+      end
     end
+    if !@client.is_connected?
+      @button_connect.backColor = @color_orange
+    end
+
+    get_messages
+
+    @check_cycle_timer = FXApp.instance.addTimeout(@check_cycle_timeout) { check_cycle }
   end
 
   def get_messages
     while (message = @client.read_message)
       if message['type'] == 'signal_message'
+        append_message(message['sender_id'], @signal_buttons_content[message['message']])
+        return if message['sender_id'] == @client.client_id
         case message['message']
           when "1"
             @signal_item_1.change_color
@@ -152,8 +198,41 @@ class MyApp < FXMainWindow
       end
 
       if message['type'] == 'text_message'
-        @text_display.setText(message['message'])
+        append_message(message['sender_id'], message['message'])
       end
+    end
+  end
+
+  def append_message(sender_id, message)
+    if sender_id == @client.client_id
+      @text_display.appendText("me: #{message}\n")
+      @text_display.makePositionVisible(@text_display.length)
+    else
+      @text_display.appendText("#{message}\n")
+      @text_display.makePositionVisible(@text_display.length)
+    end
+  end
+
+  def ping_server
+    @ping_timer = FXApp.instance.addTimeout(@ping_server_timeout) do
+      ping_websocket
+      ping_http
+      ping_server
+    end
+  end
+
+  def ping_websocket
+    @client.send_text_message('ping')
+  end
+
+  def ping_http
+    Thread.new do
+      uri = URI.parse(HTTP_URL)
+      response = Net::HTTP.get_response(uri)
+      time = Time.now
+      hours = time.strftime("%H")
+      minutes = time.strftime("%M")
+      p "code: #{response.code}, time: #{hours}:#{minutes}"
     end
   end
 

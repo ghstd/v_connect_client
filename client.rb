@@ -40,14 +40,16 @@ class WebSocketClient
         data = JSON.parse(msg.data)
 
         unless current_self.is_system_message?(data)
-          if data['message']['sender_id'] != current_self.client_id
-            current_self.received_messages << data['message']
-          end
+          # if data['message']['sender_id'] != current_self.client_id
+          #   current_self.received_messages << data['message']
+          # end
+          current_self.received_messages << data['message']
         end
       end
 
       @ws.on :close do |e|
-        puts "Connection closed"
+        p "!!!Connection closed!!!"
+        @connected = false
       end
 
       @ws.on :error do |e|
@@ -56,6 +58,7 @@ class WebSocketClient
 
       # Keep the WebSocket connection alive
       loop do
+        # p '!!!@stop!!!' if @stop
         break if @stop
         sleep 0.1
       end
@@ -108,6 +111,8 @@ class WebSocketClient
 
   def is_system_message?(data)
     if (data['type'] == "welcome") || (data['type'] == "confirm_subscription") || (data['type'] == "ping")
+      true
+    elsif data['message']['message'] == 'ping'
       true
     else
       false
