@@ -27,6 +27,8 @@ class MyApp < FXMainWindow
       '3' => 'GO-GO',
       '4' => 'FuckYou'
     }
+    @sender_ids = {}
+    @sender_id_counter = 0
     @last_signal_timestamp = 0
 
     # TIMEOUTS
@@ -135,28 +137,28 @@ class MyApp < FXMainWindow
   end
 
   def check_cycle
-    if WinAPI.check_key(97)
+    if WinAPI.check_key(97) || WinAPI.check_key(36)
       if (Time.now.to_f * 1000).to_i - @last_signal_timestamp > 250
         @client.send_signal_message("1")
         signal_button_color_change(@signal_buttons[0])
         @last_signal_timestamp = (Time.now.to_f * 1000).to_i
       end
     end
-    if WinAPI.check_key(98)
+    if WinAPI.check_key(98) || WinAPI.check_key(35)
       if (Time.now.to_f * 1000).to_i - @last_signal_timestamp > 250
         @client.send_signal_message("2")
         signal_button_color_change(@signal_buttons[1])
         @last_signal_timestamp = (Time.now.to_f * 1000).to_i
       end
     end
-    if WinAPI.check_key(99)
+    if WinAPI.check_key(99) || WinAPI.check_key(33)
       if (Time.now.to_f * 1000).to_i - @last_signal_timestamp > 250
         @client.send_signal_message("3")
         signal_button_color_change(@signal_buttons[2])
         @last_signal_timestamp = (Time.now.to_f * 1000).to_i
       end
     end
-    if WinAPI.check_key(96)
+    if WinAPI.check_key(96) || WinAPI.check_key(34)
       if (Time.now.to_f * 1000).to_i - @last_signal_timestamp > 250
         @client.send_signal_message("4")
         signal_button_color_change(@signal_buttons[3])
@@ -208,7 +210,11 @@ class MyApp < FXMainWindow
       @text_display.appendText("me: #{message}\n")
       @text_display.makePositionVisible(@text_display.length)
     else
-      @text_display.appendText("#{message}\n")
+      if @sender_ids[sender_id].nil?
+        @sender_id_counter += 1
+        @sender_ids[sender_id] = "u-#{@sender_id_counter}"
+      end
+      @text_display.appendText("#{@sender_ids[sender_id]}: #{message}\n")
       @text_display.makePositionVisible(@text_display.length)
     end
   end

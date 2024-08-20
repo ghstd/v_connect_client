@@ -13,3 +13,5 @@
 ruby path\to\your\app.rb
 pause
 ```
+
+4. [Run server](https://v-connect-q36m.onrender.com) - wait until the server wakes up.
