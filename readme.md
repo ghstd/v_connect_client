@@ -1,17 +1,17 @@
-## How to run
+# V-connect (desktop-app)
 
-1. [Install ruby](https://rubyinstaller.org/downloads/)
-   - [installation instructions](https://youtu.be/6_ek4hokiak?si=GPFuqgVqyPVX_aR4&t=209)
-2. Install gems:
-   - gem install fxruby
-   - gem install websocket-client-simple
-   - gem install ffi
-3. Create .bat file:
+### Video preview:
+<a href="https://firebasestorage.googleapis.com/v0/b/projects-aggregator-database.appspot.com/o/v_connect.mp4?alt=media&token=2f9dfa8e-471d-4b13-9c3f-300f10c86b3a">
+    <img src="./v_connect.webp" alt="video preview" width="400" height="300">
+</a>
 
-```
-@echo off
-ruby path\to\your\app.rb
-pause
-```
+### Server repository:
+https://github.com/ghstd/v_connect
 
-4. [Run server](https://v-connect-q36m.onrender.com) - wait until the server wakes up.
+### Description:
+Application for pc, allows two clients to communicate via web server, transmit signals using keyboard, has small chat, supports only one session.
+
+### Resources used:
+- https://render.com
+
+[Run server](https://v-connect-q36m.onrender.com) - wait until the server wakes up.
